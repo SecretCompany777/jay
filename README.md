@@ -1,6 +1,6 @@
 # <div align='center'>Welcome to Secret Company</div>
 
-<div align="center"><img src="https://files.catbox.moe/5vggoa.jpg"></div>
+<div align="center"><img src="https://files.catbox.moe/5poxdw.jpg"></div>
 
 ## Important Note
 
