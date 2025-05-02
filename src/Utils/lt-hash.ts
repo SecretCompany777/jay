@@ -8,8 +8,19 @@ import { hkdf } from './crypto'
 
 const o = 128
 
-class d {
+// 🔁 Konversi aman ke ArrayBuffer
+const toArrayBuffer = (input) => {
+	if (input instanceof ArrayBuffer) return input
+	if (Buffer.isBuffer(input)) {
+		return input.buffer.slice(input.byteOffset, input.byteOffset + input.byteLength)
+	}
+	if (input?.buffer instanceof ArrayBuffer) {
+		return input.buffer
+	}
+	throw new Error('Expected ArrayBuffer or Buffer, got ' + typeof input)
+}
 
+class d {
 	salt: string
 
 	constructor(e: string) {
@@ -35,30 +46,23 @@ class d {
 	}
 
 	async _addSingle(e, t) {
-		const n = new Uint8Array(await hkdf(Buffer.from(t), o, { info: this.salt })).buffer
-		return this.performPointwiseWithOverflow(await e, n, ((e, t) => e + t))
+		const hashed = new Uint8Array(await hkdf(Buffer.from(t), o, { info: this.salt })).buffer
+		return this.performPointwiseWithOverflow(await e, hashed, (x, y) => x + y)
 	}
 
 	async _subtractSingle(e, t) {
-		const n = new Uint8Array(await hkdf(Buffer.from(t), o, { info: this.salt })).buffer
-		return this.performPointwiseWithOverflow(e, n, ((e, t) => e - t))
+		const hashed = new Uint8Array(await hkdf(Buffer.from(t), o, { info: this.salt })).buffer
+		return this.performPointwiseWithOverflow(await e, hashed, (x, y) => x - y)
 	}
 
 	performPointwiseWithOverflow(e, t, r) {
-		if (!(e instanceof ArrayBuffer)) {
-			throw new Error('Invalid first argument: expected ArrayBuffer, got ' + typeof e)
-		}
-		if (!(t instanceof ArrayBuffer)) {
-			throw new Error('Invalid second argument: expected ArrayBuffer, got ' + typeof t)
-		}
-
-		const n = new DataView(e)
-		const i = new DataView(t)
+		const n = new DataView(toArrayBuffer(e))
+		const i = new DataView(toArrayBuffer(t))
 		const a = new ArrayBuffer(n.byteLength)
 		const s = new DataView(a)
 
-		for (let e = 0; e < n.byteLength; e += 2) {
-			s.setUint16(e, r(n.getUint16(e, !0), i.getUint16(e, !0)), !0)
+		for (let offset = 0; offset < n.byteLength; offset += 2) {
+			s.setUint16(offset, r(n.getUint16(offset, true), i.getUint16(offset, true)), true)
 		}
 
 		return a
